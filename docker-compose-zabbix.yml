@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   zabbix-server:
-    image: zabbix/zabbix-server-mysql:ubuntu-latest
+    image: zabbix/zabbix-server-mysql:7.0-ubuntu-latest
     container_name: zabbix-server
     environment:
       - DB_SERVER_HOST=mysql-server
@@ -14,7 +14,7 @@ services:
       - mysql-server
     restart: always
   zabbix-web:
-    image: zabbix/zabbix-web-nginx-mysql:ubuntu-latest
+    image: zabbix/zabbix-web-nginx-mysql:7.0-ubuntu-latest
     container_name: zabbix-web
     environment:
       - DB_SERVER_HOST=mysql-server
@@ -29,7 +29,7 @@ services:
       - mysql-server
     restart: always
   mysql-server:
-    image: mysql:5.7
+    image: mysql:8.0.latest
     container_name: mysql-server
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
     environment:
