@@ -1,5 +1,5 @@
 - hosts: pg-server, zabbix-server
-  become: true
+  
   tasks:
     - name: Update apt cache
       apt:
@@ -38,7 +38,7 @@
         update_cache: yes
 
 - hosts: pg-server
-  become: true
+  
   tasks:
     - name: Create config directory
       file:
@@ -58,7 +58,7 @@
         docker compose -f docker-compose.yml up -d
 
 - hosts: zabbix-server
-  become: true
+  
   tasks:
     - name: Create Zabbix config directory
       file:
@@ -74,7 +74,7 @@
         docker compose up -d
 
 - hosts: nginx-server
-  become: true
+  
   tasks:
     - name: Install Prometheus Node Exporter
       apt:
