@@ -1,4 +1,9 @@
 ---
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+    update_cache: yes
 - name: Install Prometheus Node Exporter
   apt:
     name: prometheus-node-exporter
@@ -16,3 +21,6 @@
     rule: allow
     port: 9100
     proto: tcp
+- name:  Enable UFW
+  ufw:
+    state: enabled
