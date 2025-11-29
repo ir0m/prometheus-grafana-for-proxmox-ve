@@ -1,0 +1,23 @@
+- name: Apply Common Config
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Configure DNS Server
+  hosts: dns_servers
+  become: true
+  roles:
+    - dns_server
+
+- name: Configure DHCP Server
+  hosts: dhcp_servers
+  become: true
+  roles:
+    - dhcp_server
+
+- name: Configure Monitoring Stacks
+  hosts: monitoring_servers
+  become: true
+  roles:
+    - monitoring

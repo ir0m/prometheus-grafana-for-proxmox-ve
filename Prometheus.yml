@@ -1,0 +1,9 @@
+- job_name: 'pve'
+  static_configs:
+    - targets:
+      - ${HOSTNAME}:9221  
+  metrics_path: /pve
+  params:
+    module: [default]
+    cluster: ['1']
+    node: ['1']
