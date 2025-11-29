@@ -54,3 +54,9 @@
     name: zabbix-agent
     state: restarted
     enabled: yes
+
+- name: Allow Zabbix Agent port in UFW
+  ufw:
+    rule: allow
+    port: 10050
+    proto: tcp

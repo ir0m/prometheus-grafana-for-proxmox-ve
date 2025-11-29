@@ -10,3 +10,9 @@
     name: prometheus-node-exporter
     state: started
     enabled: yes
+
+- name: Allow Node Exporter port in UFW
+  ufw:
+    rule: allow
+    port: 9100
+    proto: tcp
