@@ -1,23 +1,106 @@
-- name: Apply Common Config
-  hosts: all
+- hosts: pg-server, zabbix-server
   become: true
-  roles:
-    - common
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install Docker Dependencies
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+    - name: Create keyring directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+    - name: Add Docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+    - name: Add Docker repository
+      shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list 
+      args:
+        creates: /etc/apt/sources.list.d/docker.list
+    - name: Install Docker and Docker Compose
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
 
-- name: Configure DNS Server
-  hosts: dns_servers
+- hosts: pg-server
   become: true
-  roles:
-    - dns_server
+  tasks:
+    - name: Create config directory
+      file:
+        path: /home/${USER_NAME}/prometheus-grafana
+        state: directory
+    - name: Copy Prometheus Docker Compose file
+      copy:
+        src: docker-compose-pg.yml
+        dest: /home/${USER_NAME}/prometheus-grafana/docker-compose.yml 
+    - name: Copy Prometheus configuration file
+      copy:
+        src: Prometheus.yml
+        dest: /home/${USER_NAME}/prometheus-grafana/prometheus.yml
+    - name: Start Prometheus and Grafana containers
+      shell: |
+        cd /home/${USER_NAME}/prometheus-grafana
+        docker compose -f docker-compose.yml up -d
 
-- name: Configure DHCP Server
-  hosts: dhcp_servers
+- hosts: zabbix-server
   become: true
-  roles:
-    - dhcp_server
+  tasks:
+    - name: Create Zabbix config directory
+      file:
+        path: /home/${USER_NAME}/zabbix
+        state: directory
+    - name: Copy Zabbix Docker Compose file
+      copy:
+        src: docker-compose-zabbix.yml
+        dest: /home/${USER_NAME}/zabbix/docker-compose.yml
+    - name: Start Zabbix containers
+      shell: |
+        cd /home/${USER_NAME}/zabbix
+        docker compose up -d
 
-- name: Configure Monitoring Stacks
-  hosts: monitoring_servers
+- hosts: nginx-server
   become: true
-  roles:
-    - monitoring
+  tasks:
+    - name: Install Prometheus Node Exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+    - name: Install Zabbix Agent
+      apt:
+        name: zabbix-agent
+        state: present
+    - name: Configure Zabbix Agent (Server IP)
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Server='
+        line: 'Server=${ZABBIX_SERVER_IP}'
+    - name: Configure Zabbix Agent (ServerActive IP)
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^ServerActive='
+        line: 'ServerActive=${ZABBIX_SERVER_IP}'
+    - name: Configure Zabbix Agent (Hostname)
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Hostname='
+        line: 'Hostname=web-server'
+    - name: Restart Zabbix Agent
+      service:
+        name: zabbix-agent
+        state: restarted
+        enabled: yes
