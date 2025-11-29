@@ -31,6 +31,7 @@ services:
   mysql-server:
     image: mysql:5.7
     container_name: mysql-server
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=zabbix_db
