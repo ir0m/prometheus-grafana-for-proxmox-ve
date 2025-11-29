@@ -1,0 +1,45 @@
+---
+- name: Download Zabbix Agent package
+  get_url:
+    url: "{{ zabbix_release_url }}"
+    dest: "{{ zabbix_release_dest }}"
+    mode: '0644'
+  args:
+    creates: "{{ zabbix_release_dest }}"
+
+- name: Install Zabbix Repository
+  apt:
+    deb: "{{ zabbix_release_dest }}"
+
+- name: Install Zabbix Agent
+  apt:
+    name: zabbix-agent
+    state: present
+    update_cache: yes
+
+- name: Configure Zabbix Agent (Server IP)
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^Server='
+    line: "Server={{ zabbix_server_ip }}"
+    create: yes
+
+- name: Configure Zabbix Agent (ServerActive IP)
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^ServerActive='
+    line: "ServerActive={{ zabbix_server_ip }}"
+    create: yes
+
+- name: Configure Zabbix Agent (Hostname)
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^Hostname='
+    line: "Hostname={{ zabbix_agent_hostname }}"
+    create: yes
+
+- name: Restart Zabbix Agent
+  service:
+    name: zabbix-agent
+    state: restarted
+    enabled: yes

@@ -1,0 +1,12 @@
+---
+- name: Install Prometheus Node Exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+    update_cache: yes
+
+- name: Start and enable Node Exporter
+  service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

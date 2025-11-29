@@ -1,0 +1,20 @@
+---
+- name: Create Zabbix config directory
+  file:
+    path: "{{ zabbix_install_dir }}"
+    state: directory
+    owner: "{{ ansible_user | default('irom') }}"
+    mode: '0755'
+
+- name: Copy Zabbix Docker Compose file
+  copy:
+    src: docker-compose-zabbix.yml
+    dest: "{{ zabbix_install_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user | default('irom') }}"
+
+- name: Start Zabbix containers
+  shell: |
+    cd {{ zabbix_install_dir }}
+    docker compose up -d
+  args:
+    chdir: "{{ zabbix_install_dir }}"

@@ -1,0 +1,26 @@
+---
+- name: Create config directory
+  file:
+    path: "{{ prometheus_install_dir }}"
+    state: directory
+    owner: "{{ ansible_user | default('irom') }}"
+    mode: '0755'
+
+- name: Copy Prometheus Docker Compose file
+  copy:
+    src: docker-compose-pg.yml
+    dest: "{{ prometheus_install_dir }}/docker-compose.yml"
+    owner: "{{ ansible_user | default('irom') }}"
+
+- name: Copy Prometheus configuration file
+  copy:
+    src: prometheus.yml
+    dest: "{{ prometheus_install_dir }}/prometheus.yml"
+    owner: "{{ ansible_user | default('irom') }}"
+
+- name: Start Prometheus and Grafana containers
+  shell: |
+    cd {{ prometheus_install_dir }}
+    docker compose -f docker-compose.yml up -d
+  args:
+    chdir: "{{ prometheus_install_dir }}"

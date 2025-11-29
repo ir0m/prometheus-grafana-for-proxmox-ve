@@ -1,119 +1,21 @@
+---
 - hosts: pg-server, zabbix-server
-  
-  tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-    - name: Install Docker Dependencies
-      apt:
-        name:
-          - ca-certificates
-          - curl
-          - gnupg
-        state: present
-    - name: Create keyring directory
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-    - name: Add Docker GPG key
-      shell: |
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-      args:
-        creates: /etc/apt/keyrings/docker.gpg
-    - name: Add Docker repository
-      shell: |
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list 
-      args:
-        creates: /etc/apt/sources.list.d/docker.list
-    - name: Install Docker and Docker Compose
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-        state: present
-        update_cache: yes
+  become: yes
+  roles:
+    - docker
 
 - hosts: pg-server
-  
-  tasks:
-    - name: Create config directory
-      file:
-        path: /home/irom/prometheus-grafana
-        state: directory
-    - name: Copy Prometheus Docker Compose file
-      copy:
-        src: docker-compose-pg.yml
-        dest: /home/irom/prometheus-grafana/docker-compose.yml 
-    - name: Copy Prometheus configuration file
-      copy:
-        src: prometheus.yml
-        dest: /home/irom/prometheus-grafana/prometheus.yml
-    - name: Start Prometheus and Grafana containers
-      shell: |
-        cd /home/irom/prometheus-grafana
-        docker compose -f docker-compose.yml up -d
+  become: yes
+  roles:
+    - prometheus
 
 - hosts: zabbix-server
-  
-  tasks:
-    - name: Create Zabbix config directory
-      file:
-        path: /home/irom/zabbix
-        state: directory
-    - name: Copy Zabbix Docker Compose file
-      copy:
-        src: docker-compose-zabbix.yml
-        dest: /home/irom/zabbix/docker-compose.yml
-    - name: Start Zabbix containers
-      shell: |
-        cd /home/irom/zabbix
-        docker compose up -d
+  become: yes
+  roles:
+    - zabbix
 
 - hosts: nginx-server
-  
-  tasks:
-    - name: Install Prometheus Node Exporter
-      apt:
-        name: prometheus-node-exporter
-        state: present
-    - name: Start and enable Node Exporter
-      service:
-        name: prometheus-node-exporter
-        state: started
-        enabled: yes
-    - name: Download Zabbix Agent package
-      get_url:
-        url: https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu24.04_all.deb
-        dest: /tmp/zabbix-release.deb
-    - name: Install Zabbix Repository
-      apt:
-        deb: /tmp/zabbix-release.deb
-    - name: Install Zabbix Agent
-      apt:
-        name: zabbix-agent
-        state: present
-        update_cache: yes
-    - name: Configure Zabbix Agent (Server IP)
-      lineinfile:
-        path: /etc/zabbix/zabbix_agentd.conf
-        regexp: '^Server='
-        line: 'Server=192.168.1.238'
-    - name: Configure Zabbix Agent (ServerActive IP)
-      lineinfile:
-        path: /etc/zabbix/zabbix_agentd.conf
-        regexp: '^ServerActive='
-        line: 'ServerActive=192.168.1.238'
-    - name: Configure Zabbix Agent (Hostname)
-      lineinfile:
-        path: /etc/zabbix/zabbix_agentd.conf
-        regexp: '^Hostname='
-        line: 'Hostname=web-server'
-    - name: Restart Zabbix Agent
-      service:
-        name: zabbix-agent
-        state: restarted
-        enabled: yes
+  become: yes
+  roles:
+    - node_exporter
+    - zabbix_agent
