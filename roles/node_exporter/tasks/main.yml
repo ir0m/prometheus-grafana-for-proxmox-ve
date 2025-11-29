@@ -4,6 +4,10 @@
     name: ufw
     state: present
     update_cache: yes
+- name: Allow SSH in UFW
+  ufw:
+    rule: allow
+    name: OpenSSH
 - name: Install Prometheus Node Exporter
   apt:
     name: prometheus-node-exporter
